@@ -1,11 +1,10 @@
-
+import { clamp } from './utils.js'
 
 let app = initApp(window)
 document.body.appendChild(app.view)
 
 const [left, up, right, down] = setUpKeyboard()
 const [bunny, speedText, locationText] = setUpSprites()
-console.log(left)
 start()
 
 export function initApp(element) {
@@ -19,8 +18,7 @@ export function start() {
 
 export function gameLoop(delta) {
   updateSpeed()
-  bunny.x = bunny.x + xSpeed * delta
-  bunny.y = bunny.y + ySpeed * delta
+  updatePosition(delta)
   speedText.text = `Speed: (${xSpeed},${ySpeed})`
   locationText.text = `(${Math.floor(bunny.x)},${Math.floor(bunny.y)})`
 }
@@ -48,6 +46,19 @@ function updateSpeed() {
     ySpeed -= speedChangeFactor
   } else if (ySpeed != 0 ) {
     ySpeed = ySpeed > 0 ? ySpeed - 1 : ySpeed + 1
+  }
+}
+
+function updatePosition(delta) {
+  const [newX, xClamped] = clamp(bunny.x + xSpeed * delta, 0, window.innerWidth)
+  bunny.x = newX
+  if (xClamped) {
+    xSpeed = 0
+  }
+  const [newY, yClamped] = clamp(bunny.y + ySpeed * delta, 0, window.innerHeight)
+  bunny.y = newY
+  if (yClamped) {
+    ySpeed = 0
   }
 }
 
