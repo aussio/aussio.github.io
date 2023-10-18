@@ -1,139 +1,116 @@
-import { clamp, testForAABB } from './utils.js'
+import {clamp} from "./utils.js";
 
-let app = initApp(window)
-document.body.appendChild(app.view)
+const gridSize = 30;
+const app = new PIXI.Application({
+    background: '#1099bb',
+    width: gridSize * Math.floor(window.innerWidth / gridSize),
+    height: gridSize * Math.floor(window.innerHeight / gridSize),
+});
 
+const xGrids = app.screen.width / gridSize
+const yGrids = app.screen.height / gridSize
+
+const style = new PIXI.TextStyle({
+    fill: "white",
+    fontSize: 20,
+})
+const text = new PIXI.Text("arrow keys to move", style)
+text.x = (gridSize * xGrids / 2) - (text.width / 2)
+text.y = (gridSize * yGrids / 2) - (text.height * 2)
+app.stage.addChild(text);
+
+let hasStarted = false
+function onStart() {
+    text.destroy()
+}
+
+document.body.appendChild(app.view);
 const [left, up, right, down] = setUpKeyboard()
-const [bunny, bunnySprite, speedText, pointsText, locationText] = setUpSprites()
-const star = getStar()
-let points = 0
-start()
-
-export function initApp(element) {
-  return new PIXI.Application({ background: '#1099bb', resizeTo: element })
-}
-
-export function start() {
-  // Listen for animate update
-  drawStar()
-  app.ticker.add((delta) => gameLoop(delta));
-}
-
-export function gameLoop(delta) {
-  updateSpeed()
-  updatePosition(delta)
-  checkCollision()
-  pointsText.text = `Points: ${points} ✨`
-  const [fontSize, _] = clamp(points / 2, 12, 200)
-  pointsText.TextStyle = {
-    fontSize: 200
-  }
-  speedText.text = `Speed: (${xSpeed},${ySpeed})`
-  locationText.text = `(${Math.floor(bunny.x)},${Math.floor(bunny.y)})`
-}
-
-function checkCollision() {
-  if (testForAABB(bunnySprite, star)) {
-    app.stage.removeChild(star)
-    points += 10
-    drawStar()
-    document.body.classList.add("apply-shake");
-    setTimeout(() => {
-      document.body.classList.remove("apply-shake");
-    }, 500)
-  }
-}
-
-export function reset() {
-  bunny.x = app.screen.width / 2;
-  bunny.y = app.screen.height / 2;
-  xSpeed = 0
-  ySpeed = 0
-}
-
-function updateSpeed() {
-  const speedChangeFactor = 1
-  if (left.isDown) {
-    xSpeed -= speedChangeFactor
-  } else if (right.isDown) {
-    xSpeed += speedChangeFactor
-  } else if (xSpeed != 0) {
-    xSpeed = xSpeed > 0 ? xSpeed - 1 : xSpeed + 1
-  }
-
-  if (down.isDown) {
-    ySpeed += speedChangeFactor
-  } else if (up.isDown) {
-    ySpeed -= speedChangeFactor
-  } else if (ySpeed != 0 ) {
-    ySpeed = ySpeed > 0 ? ySpeed - 1 : ySpeed + 1
-  }
-}
-
-function updatePosition(delta) {
-  const [newX, xClamped] = clamp(bunny.x + xSpeed * delta, 0, window.innerWidth)
-  bunny.x = newX
-  if (xClamped) {
-    xSpeed = 0
-  }
-  const [newY, yClamped] = clamp(bunny.y + ySpeed * delta, 0, window.innerHeight)
-  bunny.y = newY
-  if (yClamped) {
-    ySpeed = 0
-  }
-}
-
-function setUpKeyboard() {
-  // Define the keyboard code variables
-  const left = keyboard(37)
-  const up = keyboard(38)
-  const right = keyboard(39)
-  const down = keyboard(40)
-  
-  left.press = () => {};
-  left.release = () => {};
-  right.press = () => {};
-  right.release = () => {};
-  up.press = () => {};
-  up.release = () => {};
-  down.press = () => {};
-  down.release = () => {};
-
-  return [left, up, right, down]
-}
-
 let xSpeed = 0
 let ySpeed = 0
 
-export function setUpSprites() {
-  const bunny = new PIXI.Container()
-  const speedText = new PIXI.Text()
-  const pointsText = new PIXI.Text()
-  const locationText = new PIXI.Text()
-  // create a new Sprite from an image path
-  app.stage.addChild(bunny);
-  
-  const bunnySprite = PIXI.Sprite.from('https://pixijs.com/assets/bunny.png');
-  // center the sprite's anchor point
-  bunnySprite.anchor.set(0.5);
-  // start the sprite at the center of the screen
-  bunny.x = app.screen.width / 2;
-  bunny.y = app.screen.height / 2;
-  bunny.addChild(bunnySprite)
+// Snake
+const headX = Math.floor(xGrids / 2) * gridSize
+const headY = Math.floor(yGrids / 2) * gridSize
+const head = box(0xDE3249, headX, headY)
+const snakeBoxes = [head]
+const maxLength = 8
 
-  locationText.x = -50
-  locationText.y = -bunny.height - 10
-  bunny.addChild(locationText)
-  
-  app.stage.addChild(speedText)
-  pointsText.y = 50
-  app.stage.addChild(pointsText)
+// Listen for animate update
+app.ticker.maxFPS = 10
+app.ticker.add((delta) =>
+{
+    updateSpeed()
+    updatePosition()
+});
 
-  return [bunny, bunnySprite, speedText, pointsText, locationText]
+function updatePosition(delta) {
+    const head = snakeBoxes[snakeBoxes.length - 1]
+    const [newX, isNewX] = clamp(head.x + xSpeed, 0, app.screen.width - gridSize)
+    const [newY, isNewY] = clamp(head.y + ySpeed, 0, app.screen.height - gridSize)
+    // If we've moved
+    if (head.x != newX || head.y != newY ) {
+        if (!hasStarted) {
+            hasStarted = true
+            onStart()
+        }
+        snakeBoxes.push(box(0xAE3249, newX, newY))
+    }
+    if (snakeBoxes.length > maxLength) {
+        const box = snakeBoxes.shift()
+        box.destroy()
+    }
 }
 
+function updateSpeed() {
+    const speedChangeFactor = gridSize
+    if (left.isDown) {
+        xSpeed = -speedChangeFactor
+        ySpeed = 0
+    } else if (right.isDown) {
+        xSpeed = speedChangeFactor
+        ySpeed = 0
+    }
 
-// The keyboard helper
+    if (down.isDown) {
+        ySpeed = speedChangeFactor
+        xSpeed = 0
+    } else if (up.isDown) {
+        ySpeed = -speedChangeFactor
+        xSpeed = 0
+    }
+}
+
+function box(color, x, y) {
+    const box = new PIXI.Graphics();
+    box.beginFill(color);
+    box.drawRect(0, 0, gridSize, gridSize);
+    box.x = x
+    box.y = y
+    box.endFill();
+    app.stage.addChild(box)
+    return box
+}
+
+function setUpKeyboard() {
+    // Define the keyboard code variables
+    const left = keyboard(37)
+    const up = keyboard(38)
+    const right = keyboard(39)
+    const down = keyboard(40)
+
+    left.press = () => {};
+    left.release = () => {};
+    right.press = () => {};
+    right.release = () => {};
+    up.press = () => {};
+    up.release = () => {};
+    down.press = () => {};
+    down.release = () => {};
+
+    return [left, up, right, down]
+}
+
 function keyboard(keyCode) {
     const key = {};
     key.code = keyCode;
@@ -170,18 +147,4 @@ function keyboard(keyCode) {
     window.addEventListener("keydown", key.downHandler.bind(key), false);
     window.addEventListener("keyup", key.upHandler.bind(key), false);
     return key;
-}
-
-function getStar() {
-  const star = new PIXI.Text("⭐️", new PIXI.TextStyle({
-    fontSize: 30,
-  }))
-  return star
-}
-
-function drawStar() {
-  star.x = Math.random() * app.screen.width;
-  star.y = Math.random() * app.screen.height;
-  star.tint = Math.random() * 0x808080;
-  app.stage.addChild(star);
 }
