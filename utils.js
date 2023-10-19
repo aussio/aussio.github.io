@@ -6,7 +6,7 @@ export function clamp (num, min, max) {
 
 // Test For Hit
 // A basic AABB check between two different squares
-export function testForAABB(object1, object2)
+export function boxesHitEachOther(object1, object2)
 {
     const bounds1 = object1.getBounds();
     const bounds2 = object2.getBounds();
