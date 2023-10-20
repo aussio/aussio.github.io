@@ -85,7 +85,12 @@ function onStart() {
 }
 
 function getColor() {
-    const rainbow = ["#ff0000", "#ffa500", "#ffff00", "#008000", "#0000ff", "#4b0082", "#ee82ee"]
+    const rainbow = ["rgb(255,136,136)",
+        "rgb(143,251,255)",
+        "rgb(255,255,127)",
+        "rgb(123,123,255)",
+        "rgb(247,129,255)",
+    ]
     return rainbow[Math.floor(Math.random()*rainbow.length)]
 }
 
@@ -251,6 +256,7 @@ function updateSpeed() {
 
 function box(texture, x, y, size=gridSize) {
     const box = new PIXI.Sprite(texture);
+    box.tint = getColor()
     box.interactive = true;
     box.hitArea = new PIXI.Rectangle(2, 2, size-2, size-2);
     box.x = x
