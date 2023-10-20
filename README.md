@@ -2,4 +2,4 @@
 
 Run locally with:
 
-`serve .`
+`live-server .`

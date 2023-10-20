@@ -4,6 +4,9 @@ const gridSize = 30;
 let app, snakeBoxes, text, scoreText, food;
 let left, up, right, down;
 let xSpeed, ySpeed, score, hasStarted;
+let direction = null;
+const headTexture = PIXI.Texture.from('./images/head.png');
+const bodyTexture = PIXI.Texture.from('./images/body.png');
 
 function startGame() {
     app = new PIXI.Application({
@@ -52,9 +55,9 @@ function restartGame() {
     app.stage.addChild(food);
 
     // Snake
-    const headX = Math.floor(xGrids / 2) * gridSize
-    const headY = Math.floor(yGrids / 2) * gridSize
-    const head = box(getColor(), headX, headY)
+    const headX = (Math.floor(xGrids / 2) * gridSize) + (gridSize / 2)
+    const headY = (Math.floor(yGrids / 2) * gridSize) + (gridSize / 2)
+    const head = box(headTexture, headX, headY)
     snakeBoxes = [head]
 
     document.body.appendChild(app.view);
@@ -128,19 +131,26 @@ function endGame() {
     app.stage.addChild(gameOver);
     app.stage.addChild(scoreText);
 
-    const size = gridSize * 1.5
+    const size = gridSize * 2
+    const head = box(
+        headTexture,
+        middleX,
+        middleY + size*1.5,
+        size,
+    )
+    head.angle = 90
     for (let i=1; i<= 5; i++) {
         box(
-            getColor(),
-            middleX + size - (size*i),
-            middleY + (size*2),
+            bodyTexture,
+            middleX - ((size/2) * i),
+            middleY + size*1.5,
             size,
         )
     }
 
     const endFood = getFood(size)
-    endFood.x = middleX+ size + size
-    endFood.y = middleY + (size*2)
+    endFood.x = middleX + size
+    endFood.y = middleY + size
     app.stage.addChild(endFood);
 
     app.ticker.stop()
@@ -167,7 +177,7 @@ function endGame() {
 function foodEaten(head) {
         score = score + 100
         const tail = snakeBoxes[snakeBoxes.length - 1]
-        snakeBoxes.push(box(getColor(), tail.x, tail.y))
+        snakeBoxes.push(box(bodyTexture, tail.x, tail.y))
         food.destroy()
         food = getRandomFood()
         app.stage.addChild(food);
@@ -183,6 +193,20 @@ function updatePosition(delta) {
             hasStarted = true
             onStart()
         }
+        switch (direction) {
+            case 'left':
+                head.angle = -90;
+                break;
+            case 'right':
+                head.angle = 90;
+                break;
+            case 'down':
+                head.angle = 180;
+                break;
+            case 'up':
+                head.angle = 0;
+                break;
+        }
         let tempX = null
         let tempY = null
         for (const box of snakeBoxes) {
@@ -197,37 +221,41 @@ function updatePosition(delta) {
 }
 
 function getNextPosition(box) {
-    let [nextX, isNewX] = clamp(box.x + xSpeed, 0, app.screen.width - gridSize)
-    let [nextY, isNewY] = clamp(box.y + ySpeed, 0, app.screen.height - gridSize)
+    let [nextX, isNewX] = clamp(box.x + xSpeed, gridSize/2, gridSize/2 + app.screen.width - gridSize)
+    let [nextY, isNewY] = clamp(box.y + ySpeed, gridSize/2, gridSize/2 + app.screen.height - gridSize)
     return [nextX, nextY]
 }
 
 function updateSpeed() {
     const speedChangeFactor = gridSize
     if (left.isDown && xSpeed <= 0) {
+        direction = 'left'
         xSpeed = -speedChangeFactor
         ySpeed = 0
     } else if (right.isDown && xSpeed >= 0) {
+        direction = 'right'
         xSpeed = speedChangeFactor
         ySpeed = 0
     }
 
     if (down.isDown && ySpeed >= 0) {
+        direction = 'down'
         ySpeed = speedChangeFactor
         xSpeed = 0
     } else if (up.isDown && ySpeed <= 0) {
+        direction = 'up'
         ySpeed = -speedChangeFactor
         xSpeed = 0
     }
 }
 
-function box(color, x, y, size=gridSize) {
-    const box = new PIXI.Graphics();
-    box.beginFill(color);
-    box.drawRect(0, 0, size, size);
+function box(texture, x, y, size=gridSize) {
+    const box = new PIXI.Sprite(texture);
+    box.interactive = true;
+    box.hitArea = new PIXI.Rectangle(2, 2, size-2, size-2);
     box.x = x
     box.y = y
-    box.endFill();
+    box.anchor.set(0.5)
     app.stage.addChild(box)
     return box
 }
