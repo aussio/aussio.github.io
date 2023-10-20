@@ -1,57 +1,66 @@
 import {clamp, boxesHitEachOther} from "./utils.js";
 
 const gridSize = 30;
-const app = new PIXI.Application({
-    background: '#1099bb',
-    width: gridSize * Math.floor(window.innerWidth / gridSize),
-    height: gridSize * Math.floor(window.innerHeight / gridSize),
-});
+let app, snakeBoxes, text, scoreText, food;
+let left, up, right, down;
+let xSpeed, ySpeed, score, hasStarted;
 
-const xGrids = app.screen.width / gridSize
-const yGrids = app.screen.height / gridSize
+function startGame() {
+    app = new PIXI.Application({
+        background: '#1099bb',
+        width: gridSize * Math.floor(window.innerWidth / gridSize),
+        height: gridSize * Math.floor(window.innerHeight / gridSize),
+    });
 
-const style = new PIXI.TextStyle({
-    fill: "white",
-    fontSize: 20,
-})
-const text = new PIXI.Text("arrow keys to move", style)
-text.x = (gridSize * xGrids / 2) - (text.width / 2)
-text.y = (gridSize * yGrids / 2) - (text.height * 2)
-app.stage.addChild(text);
-
-let score = 0
-const stuff = new PIXI.Text(score, style)
-app.stage.addChild(stuff);
-
-const debug = new PIXI.Text("", style)
-debug.y = 30
-app.stage.addChild(debug);
-
-let food = getRandomFood()
-app.stage.addChild(food);
-
-let hasStarted = false
-function onStart() {
-    text.destroy()
+    restartGame()
 }
 
-document.body.appendChild(app.view);
-const [left, up, right, down] = setUpKeyboard()
-let xSpeed = 0
-let ySpeed = 0
-
-function getColor() {
-    const rainbow = ["#ff0000", "#ffa500", "#ffff00", "#008000", "#0000ff", "#4b0082", "#ee82ee"]
-    return rainbow[Math.floor(Math.random()*rainbow.length)]
+function anyKeyToContinue(e) {
+    restartGame()
 }
 
-// Snake
-const headX = Math.floor(xGrids / 2) * gridSize
-const headY = Math.floor(yGrids / 2) * gridSize
-const head = box(getColor(), headX, headY)
-const snakeBoxes = [head]
-const maxLength = 8
+function restartGame() {
+    const keys = setUpKeyboard()
+    left = keys[0]
+    up = keys[1]
+    right = keys[2]
+    down = keys[3]
 
+    app.ticker.start()
+    app.stage.removeChildren()
+    xSpeed = 0
+    ySpeed = 0
+    score = 0
+    hasStarted = false
+
+    const xGrids = app.screen.width / gridSize
+    const yGrids = app.screen.height / gridSize
+
+    const style = new PIXI.TextStyle({
+        fill: "white",
+        fontSize: 20,
+    })
+    text = new PIXI.Text("arrow keys to move", style)
+    text.x = (gridSize * xGrids / 2) - (text.width / 2)
+    text.y = (gridSize * yGrids / 2) - (text.height * 2)
+    app.stage.addChild(text);
+
+    scoreText = new PIXI.Text(score, style)
+    app.stage.addChild(scoreText);
+
+    food = getRandomFood()
+    app.stage.addChild(food);
+
+    // Snake
+    const headX = Math.floor(xGrids / 2) * gridSize
+    const headY = Math.floor(yGrids / 2) * gridSize
+    const head = box(getColor(), headX, headY)
+    snakeBoxes = [head]
+
+    document.body.appendChild(app.view);
+}
+
+startGame()
 // Listen for animate update
 app.ticker.maxFPS = 10
 app.ticker.add((delta) =>
@@ -65,8 +74,18 @@ app.ticker.add((delta) =>
     if (snakeHitsItself()) {
         endGame()
     }
-    stuff.text = `Score: ${score}`
+    scoreText.text = `Score: ${score}`
 });
+
+function onStart() {
+    text.destroy()
+}
+
+function getColor() {
+    const rainbow = ["#ff0000", "#ffa500", "#ffff00", "#008000", "#0000ff", "#4b0082", "#ee82ee"]
+    return rainbow[Math.floor(Math.random()*rainbow.length)]
+}
+
 
 function snakeHitsItself() {
     const head = snakeBoxes[0]
@@ -79,8 +98,18 @@ function snakeHitsItself() {
     return false
 }
 
-function endGame() {
+function endGameReset() {
+    xSpeed = 0
+    ySpeed = 0
+    food.destroy()
+    scoreText.destroy()
+    for (let box of snakeBoxes) {
+        box.destroy()
+    }
+}
 
+function endGame() {
+    endGameReset()
 
     const middleX = app.screen.width / 2
     const middleY = app.screen.height / 2
@@ -99,18 +128,40 @@ function endGame() {
     app.stage.addChild(gameOver);
     app.stage.addChild(scoreText);
 
+    const size = gridSize * 1.5
     for (let i=1; i<= 5; i++) {
         box(
             getColor(),
-            middleX - (gridSize*i),
-            middleY + (gridSize*2)
+            middleX + size - (size*i),
+            middleY + (size*2),
+            size,
         )
     }
 
-    const food = getFood()
-    food.x = middleX + gridSize
-    food.y = middleY + (gridSize*2)
-    app.stage.addChild(food);
+    const endFood = getFood(size)
+    endFood.x = middleX+ size + size
+    endFood.y = middleY + (size*2)
+    app.stage.addChild(endFood);
+
+    app.ticker.stop()
+
+    function anyKeyToContinue() {
+        window.removeEventListener("keydown", anyKeyToContinue)
+        restartGame()
+    }
+
+    setTimeout(() => {
+        window.addEventListener("keydown", anyKeyToContinue)
+        const anyKeyText = new PIXI.Text(`Press any key to play again`, new PIXI.TextStyle({
+            fontSize: 20,
+            fill: 'white',
+        }))
+        anyKeyText.x = middleX - (anyKeyText.width / 2)
+        anyKeyText.y = middleY + anyKeyText.height * 2
+        app.stage.addChild(anyKeyText);
+        app.render()
+    }, 1000)
+
 }
 
 function foodEaten(head) {
@@ -170,10 +221,10 @@ function updateSpeed() {
     }
 }
 
-function box(color, x, y) {
+function box(color, x, y, size=gridSize) {
     const box = new PIXI.Graphics();
     box.beginFill(color);
-    box.drawRect(0, 0, gridSize, gridSize);
+    box.drawRect(0, 0, size, size);
     box.x = x
     box.y = y
     box.endFill();
@@ -181,10 +232,10 @@ function box(color, x, y) {
     return box
 }
 
-function getFood() {
+function getFood(size=gridSize) {
     const text = ["🍓", "🍌"][Math.round(Math.random())]
     return new PIXI.Text(text, new PIXI.TextStyle({
-        fontSize: 30,
+        fontSize: size,
     }))
 }
 
