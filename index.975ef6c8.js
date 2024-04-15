@@ -610,7 +610,7 @@ var _pixiJs = require("pixi.js");
         // Just for fun, let's rotate mr rabbit a little.
         // * Delta is 1 if running at 100% performance *
         // * Creates frame-independent transformation *
-        bunny.rotation += 0.1 * time.deltaTime;
+        bunny.rotation += 0.05 * time.deltaTime;
     });
 })();
 
