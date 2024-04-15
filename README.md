@@ -1,5 +1,6 @@
 # aussio.github.io
 
 Run locally with:
+`npm install`
 
-`live-server .`
+`npm run start`

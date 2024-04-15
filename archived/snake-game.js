@@ -6,7 +6,7 @@ let left, up, right, down;
 let xSpeed, ySpeed, score, hasStarted;
 let direction = null;
 const headTexture = PIXI.Texture.from('./images/head.png');
-const bodyTexture = PIXI.Texture.from('./images/body.png');
+const bodyTexture = PIXI.Texture.from('./images/body-white.png');
 
 function startGame() {
     app = new PIXI.Application({
