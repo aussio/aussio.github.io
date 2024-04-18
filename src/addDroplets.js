@@ -4,7 +4,7 @@ import { randomBetween, getRandomInt } from './mathUtils';
 export function addDroplets(app, dropletsList, count, onClick) {
     for (let i = 0; i < count; i++) {
         // Create droplets in evenly-spaced columns, with a little random.
-        column_width = app.screen.width / count
+        const column_width = app.screen.width / count
         const x = column_width * i + randomBetween(0, column_width / 2)
         addDroplet(app, dropletsList, x, onClick)
     }
