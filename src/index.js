@@ -34,7 +34,7 @@ async function preload() {
     await preload();
 
     const scoreText = addScore()
-    addDroplets(app, droplets, 15, onDropletClick);
+    addDroplets(app, droplets, 5, onDropletClick);
 
     // Add the droplets animation callback to the application's ticker.
     app.ticker.add((time) => {
