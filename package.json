@@ -3,6 +3,7 @@
     "scripts": {
         "start": "parcel index.html --open",
         "build": "rm -rf dist && parcel build index.html",
+        "clean": "rm -rf ./node_modules; rm -rf ./.parcel-cache",
         "predeploy": "rm -rf dist && parcel build index.html --public-url https://aussio.github.io/",
         "deploy": "gh-pages -d dist"
     },
