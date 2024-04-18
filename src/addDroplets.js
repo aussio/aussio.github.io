@@ -11,7 +11,7 @@ export function addDroplets(app, dropletsList, count, onClick) {
 }
 
 export function addDroplet(app, dropletsList, x, onClick) {
-    d = new Droplet(dropletsList, onClick)
+    const d = new Droplet(dropletsList, onClick)
     app.stage.addChild(d.container);
     // Adjust for anchor set to middle
     d.x = x + (d.width / 2)

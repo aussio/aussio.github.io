@@ -1,6 +1,6 @@
 import { Application, Assets, TextStyle, Text } from 'pixi.js';
-import water_droplet from '../static/Water_Droplet_Pin.png'
-import { addDroplet, addDroplets, animateDroplets } from './addDroplets';
+import water_droplet from '../static/Water_Droplet_Pin.png';
+import { addDroplets } from './addDroplets';
 
 // Create a PixiJS application.
 const app = new Application();
@@ -9,8 +9,7 @@ const droplets = [];
 
 let score = 0;
 
-async function setup()
-{
+async function setup() {
     // Intialize the application.
     await app.init({ background: '#1099bb', resizeTo: window });
     app.ticker.maxFPS = 60
@@ -19,8 +18,7 @@ async function setup()
     document.body.appendChild(app.canvas);
 }
 
-async function preload()
-{
+async function preload() {
     // Create an array of asset data to load.
     const assets = [
         { alias: 'water_droplet', src: water_droplet },
@@ -31,8 +29,7 @@ async function preload()
 }
 
 // Asynchronous IIFE
-(async () =>
-{
+(async () => {
     await setup();
     await preload();
 
