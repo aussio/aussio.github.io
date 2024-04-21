@@ -1,6 +1,8 @@
-import { Application, Assets, TextStyle, Text } from 'pixi.js';
-import water_droplet from '../static/Water_Droplet_Pin.png';
+import { Application, Assets, TextStyle, Text, TilingSprite, Texture } from 'pixi.js';
 import { addDroplets } from './addDroplets';
+import water_droplet from '../static/Water_Droplet_Pin.png';
+import dirt from '../static/dirt.png';
+import grass_top from '../static/grass_top.png';
 
 // Create a PixiJS application.
 const app = new Application();
@@ -22,6 +24,8 @@ async function preload() {
     // Create an array of asset data to load.
     const assets = [
         { alias: 'water_droplet', src: water_droplet },
+        { alias: 'dirt', src: dirt },
+        { alias: 'grass_top', src: grass_top },
     ];
 
     // Load the assets defined above.
@@ -32,6 +36,8 @@ async function preload() {
 (async () => {
     await setup();
     await preload();
+
+    addBackground()
 
     const scoreText = addScore()
     addDroplets(app, droplets, 5, onDropletClick);
@@ -53,6 +59,27 @@ async function preload() {
     }
 })();
 
+function addBackground() {
+    const dirt = Texture.from('dirt')
+    const dirtHeight = (dirt.height / 2)
+    const tilingDirt = new TilingSprite({
+        texture: dirt,
+        width: app.screen.width,
+        height: dirtHeight,
+    });
+    tilingDirt.y = app.screen.height - dirtHeight
+    app.stage.addChild(tilingDirt);
+
+    const grass = Texture.from('grass_top')
+    const tilingGrass = new TilingSprite({
+        texture: grass,
+        width: app.screen.width,
+        height: grass.height,
+    });
+    tilingGrass.y = app.screen.height - grass.height  - dirtHeight
+    app.stage.addChild(tilingGrass);
+}
+
 function addScore() {
     const style = new TextStyle({
         fontFamily: 'Arial',
@@ -66,10 +93,4 @@ function addScore() {
     text.y += text.height / 2
     app.stage.addChild(text);
     return text
-}
-
-function onDropletClick(droplet) {
-    console.log(`value: ${droplet.value}`)
-    score += droplet.value
-    console.log(`score: ${score}`)
 }

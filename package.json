@@ -2,10 +2,10 @@
     "browserslist": "> 0.5%, last 2 versions, not dead",
     "scripts": {
         "start": "parcel index.html --open",
-        "build": "rm -rf dist && parcel build index.html",
-        "clean": "rm -rf ./node_modules; rm -rf ./.parcel-cache",
-        "predeploy": "rm -rf dist && parcel build index.html --public-url https://aussio.github.io/",
-        "deploy": "gh-pages -d dist"
+        "build": "rm -rf ./.parcel-cache && rm -rf dist && parcel build index.html --public-url https://aussio.github.io/",
+        "predeploy": "npm run build",
+        "deploy": "gh-pages -d dist",
+        "example": "parcel example.html --open"
     },
     "dependencies": {
         "pixi.js": "8.1.0"
