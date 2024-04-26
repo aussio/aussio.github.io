@@ -1,5 +1,7 @@
-import { Application, Assets, TextStyle, Text, TilingSprite, Texture } from 'pixi.js';
-import { addDroplets } from './addDroplets';
+import { Application, Assets } from 'pixi.js';
+import { addDroplets } from './Droplet';
+import { shuffleArray, randomInt } from './mathUtils'
+import { addBackground, addScore, newProblem } from './background';
 import water_droplet from '../static/Water_Droplet_Pin.png';
 import dirt from '../static/dirt.png';
 import grass_top from '../static/grass_top.png';
@@ -7,9 +9,11 @@ import grass_top from '../static/grass_top.png';
 // Create a PixiJS application.
 const app = new Application();
 
+const NUM_DROPLETS = 5
 const droplets = [];
 
 let score = 0;
+const SCORE_INCREMENT = 10
 
 async function setup() {
     // Intialize the application.
@@ -37,60 +41,43 @@ async function preload() {
     await setup();
     await preload();
 
-    addBackground()
+    addBackground(app)
 
-    const scoreText = addScore()
-    addDroplets(app, droplets, 5, onDropletClick);
+    let answer = newProblem(app)
+    const scoreText = addScore(app)
+    addDroplets(app, droplets, getNextValues(NUM_DROPLETS, droplets, answer), onDropletClick);
 
     // Add the droplets animation callback to the application's ticker.
     app.ticker.add((time) => {
         droplets.forEach(d => d.animate(app, time))
 
-        if (droplets.length <= 2) {
-            addDroplets(app, droplets, 5, onDropletClick);
+        if (droplets.length < NUM_DROPLETS) {
+            addDroplets(app, droplets, getNextValues(3, droplets, answer), onDropletClick);
         }
     });
 
     function onDropletClick(droplet) {
-        console.log(`value: ${droplet.value}`)
-        score += droplet.value
-        console.log(`score: ${score}`)
+        if (droplet.value == answer) {
+            score += SCORE_INCREMENT
+            droplet.destroy()
+            console.log("correct!")
+            answer = newProblem(app)
+        } else {
+            console.log("wrong!")
+        }
         scoreText.text = `score: ${score}`
     }
 })();
 
-function addBackground() {
-    const dirt = Texture.from('dirt')
-    const dirtHeight = (dirt.height / 2)
-    const tilingDirt = new TilingSprite({
-        texture: dirt,
-        width: app.screen.width,
-        height: dirtHeight,
-    });
-    tilingDirt.y = app.screen.height - dirtHeight
-    app.stage.addChild(tilingDirt);
-
-    const grass = Texture.from('grass_top')
-    const tilingGrass = new TilingSprite({
-        texture: grass,
-        width: app.screen.width,
-        height: grass.height,
-    });
-    tilingGrass.y = app.screen.height - grass.height  - dirtHeight
-    app.stage.addChild(tilingGrass);
-}
-
-function addScore() {
-    const style = new TextStyle({
-        fontFamily: 'Arial',
-        fontWeight: 'bold',
-        fill: 'pink',
-        stroke: { color: 'black', width: 5, join: 'round' },
-    });
-    const text = new Text({ text: 'score: 0', style });
-    text.anchor.set(0.5);
-    text.x = app.screen.width - 100
-    text.y += text.height / 2
-    app.stage.addChild(text);
-    return text
+function getNextValues(num, droplets, answer) {
+    values = []
+    if (!droplets.find((d) => d.value == answer)) {
+        values.push(answer)
+    } else {
+        values.push(randomInt(20))
+    }
+    for (let i = 0; i < num - 1; i++) {
+        values.push(randomInt(20))
+    }
+    return shuffleArray(values)
 }

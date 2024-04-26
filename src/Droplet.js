@@ -1,17 +1,18 @@
 import { Container, Sprite, Text, TextStyle } from 'pixi.js';
-import { randomBetween, getRandomInt } from './mathUtils';
+import { randomBetween, randomInt } from './mathUtils';
 
-export function addDroplets(app, dropletsList, count, onClick) {
-    for (let i = 0; i < count; i++) {
+export function addDroplets(app, dropletsList, values, onClick) {
+    values.forEach((value, i) => {
         // Create droplets in evenly-spaced columns, with a little random.
-        const column_width = app.screen.width / count
+        const column_width = app.screen.width / values.length
         const x = column_width * i + randomBetween(0, column_width / 2)
-        addDroplet(app, dropletsList, x, onClick)
-    }
+
+        addDroplet(app, dropletsList, x, onClick, value)
+    })
 }
 
-export function addDroplet(app, dropletsList, x, onClick) {
-    const d = new Droplet(dropletsList, onClick)
+export function addDroplet(app, dropletsList, x, onClick, value) {
+    const d = new Droplet(dropletsList, onClick, value)
     app.stage.addChild(d.container);
     // Adjust for anchor set to middle
     d.x = x + (d.width / 2)
@@ -29,10 +30,10 @@ export function addDroplet(app, dropletsList, x, onClick) {
 */
 class Droplet {
     static ASSET = 'water_droplet'
-    static SPEED = 2.5
+    static SPEED = 1
     static STAGE_PADDING = 100;
 
-    constructor(dropletsList, onClick) {
+    constructor(dropletsList, onClick, value) {
         this.onClick = onClick
         // Set up state
         this.queue_destroy = false
@@ -45,7 +46,8 @@ class Droplet {
         // Droplets are currently huge, so scale to small, then add some random.
         this.sprite.scale.set(0.05 + Math.random() * 0.025);
         this.container.addChild(this.sprite);
-        this.addNumber()
+        this.value = value
+        this.addNumber(value)
         this.setupClickEvents()
 
         this.speed = Droplet.SPEED + Math.random();
@@ -68,15 +70,14 @@ class Droplet {
         return this.sprite.height
     }
 
-    addNumber() {
+    addNumber(value) {
         const style = new TextStyle({
             fontFamily: 'Arial',
             fontWeight: 'bold',
             fill: 'white',
             stroke: { color: 'black', width: 5, join: 'round' },
         });
-        this.value = getRandomInt(9)
-        const num = new Text({ text: this.value, style });
+        const num = new Text({ text: value, style });
         num.anchor.set(0.5);
         num.y += num.height / 2
         this.container.addChild(num);
@@ -90,15 +91,14 @@ class Droplet {
         // the pointer* events for handling different
         // button events.
         this.container
-            .on('pointerdown', (e) => {this.onButtonDown(e); this.onClick(this)} )
+            .on('pointerdown', (e) => { this.onClick(this) })
             .on('pointerupoutside', (e) => this.onButtonUp(e))
             .on('pointerover', (e) => this.onButtonOver(e))
             .on('pointerout', (e) => this.onButtonOut(e))
     }
 
     onButtonDown(event) {
-        console.log("onButtonDown")
-        this.destroy()
+        // console.log("onButtonDown")
     }
     onButtonUp(event) {
         // console.log("onButtonUp")
